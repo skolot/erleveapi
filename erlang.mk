@@ -59,7 +59,7 @@ $(mkdir):
 	$(VERBOSE)echo "[mkdir]" $@
 	$(VERBOSE)mkdir -p $@
 
-compile: $(beam_out_files) $(app_out_files) $(etc_out_files) $(priv_out_files) $(beam_test_out_files)
+compile: prepare $(beam_out_files) $(app_out_files) $(etc_out_files) $(priv_out_files) $(beam_test_out_files)
 
 clean_files = $(beam_out_files)	$(app_out_files) $(etc_out_files) $(beam_test_out_files)
 
