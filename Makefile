@@ -1,8 +1,5 @@
 MKINCDIR ?= $(PWD)
 
-indir = .
-outdir = .
-
 SHELL = bash
 GIT ?= git
 ECHO ?= echo
@@ -21,34 +18,21 @@ endif
 
 DEPSDST ?= deps
 
-DEPS ?= jsx erleveapi_parser
-DEP_jsx_SOURCE ?= "git@github.com:talentdeficit/jsx.git"
-DEP_erleveapi_parser_SOURCE ?= "git@github.com:skolot/erleveapi_parser.git"
+ifneq "$(realpath config.mk)" ""
+include config.mk
+endif
 
-APPS = .
-SUBDIRS := $(addprefix $(DEPSDST)/,$(DEPS)) $(APPS) test
+APPS = $(DEPS) $(APP)
+
+export $(addsuffix _ERLCFLAGS, $(APPS))
+export $(addsuffix _DIR, $(APPS))
 
 GET_DEPS = $(addprefix get-deps-, $(DEPS))
 UPDATE_DEPS = $(addprefix update-deps-, $(DEPS))
+COMPILE_APPS = $(addprefix compile-, $(APPS))
+CLEAN_APPS =$(addprefix clean-, $(APPS))
 
 all: prepare get-deps update-deps compile
-
-$(GET_DEPS):
-	$(VERBOSE)$(ECHO) "[get dep] $(subst get-deps-,,$@)"; \
-		[ ! -r $(DEPSDST)/$(subst get-deps-,,$@)/.git ] && \
-		$(GIT) clone $(GITSUPPRES) $(DEP_$(subst get-deps-,,$@)_SOURCE) $(DEPSDST)/$(subst get-deps-,,$@); exit 0
-
-$(UPDATE_DEPS):
-	$(VERBOSE)$(ECHO) "[update dep] $(subst update-deps-,,$@)"
-	$(VERBOSE)[ -r $(DEPSDST)/$(subst update-deps-,,$@)/.git ] && \
-		cd $(DEP_$(subst get-deps-,,$@)_SOURCE) $(DEPSDST)/$(subst update-deps-,,$@) && \
-		$(GIT) pull $(GITSUPPRES) || \
-		$(ECHO) "$(subst update-deps-,,$@) doesn't exist, please run \`make get-deps\' before"
-
-get-deps: $(GET_DEPS)
-
-update-deps: $(UPDATE_DEPS)
-
 
 prepare: mkdir
 
@@ -58,13 +42,34 @@ $(DEPSDST):
 	$(VERBOSE)$(ECHO) "[mkdir] $@"
 	$(VERBOSE)mkdir -p $@
 
-clean compile:
-	$(VERBOSE)cd $(indir) && \
-	for d in $(SUBDIRS); do \
-		$(MAKE) $(SILENT) -C $(indir)/$${d} -f $(MKINCDIR)/erlang.mk indir=$(indir)/$${d} outdir=$(outdir)/$${d} subdir=$${d} $@ || break; \
-	done
+$(GET_DEPS):
+	$(VERBOSE)$(ECHO) "[get dep] $(subst get-deps-,,$@)"; \
+		[ ! -r $($(subst get-deps-,,$@)_DIR)/.git ] && \
+		$(GIT) clone $(GITSUPPRES) $($(subst get-deps-,,$@)_SOURCE) $($(subst get-deps-,,$@)_DIR); exit 0
+
+get-deps: $(GET_DEPS)
+
+$(UPDATE_DEPS):
+	$(VERBOSE)$(ECHO) "[update dep] $(subst update-deps-,,$@)"
+	$(VERBOSE)[ -r $($(subst update-deps-,,$@)_DIR)/.git ] && \
+		cd $($(subst update-deps-,,$@)_DIR) && $(GIT) pull $(GITSUPPRES) || \
+		$(ECHO) "$(subst update-deps-,,$@) doesn't exist, please run \`make get-deps\'"
+
+update-deps: $(UPDATE_DEPS)
+
+compile: $(COMPILE_APPS)
+
+$(COMPILE_APPS):
+	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst compile-,,$(@))_DIR) -f $(MKINCDIR)/erlang.mk appname=$(subst compile-,,$(@)) compile
+
+clean: $(CLEAN_APPS)
+
+$(CLEAN_APPS):
+	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst clean-,,$(@))_DIR) -f $(MKINCDIR)/erlang.mk appname=$(subst clean-,,$(@)) clean
+
 
 test: compile
 	$(VERBOSE)erl -noshell -pa ebin -eval 'eunit:test(eveapi_parser_SUITE)' -s init stop
 
-.PHONY: get-deps update-deps prepare mkdir clean compile $(GET_DEPS) $(UPDATE_DEPS)
+.PHONY: get-deps update-deps prepare mkdir clean compile test $(GET_DEPS) $(UPDATE_DEPS) $(COMPILE_APPS) $(CLEAN_APPS)
+

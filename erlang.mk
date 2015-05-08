@@ -3,21 +3,12 @@ ERL ?= erl
 INSTALL ?= install 
 INSTALL_FLAGS ?= -D -m 0644
 
-indir? = 
-outdir? = 
-
-ifeq "$(indir)" ""
-$(error "in dir not specified")
-endif
-
-ifeq "$(outdir)" ""
-$(error "out dir not specified")
-endif
+extra_erlcflags = $($(appname)_ERLCFLAGS)
 
 libdir ?= ../../deps
-ebindir = ebin
-srcdir = src
-testdir = test
+ebindir = ./ebin
+srcdir = ./src
+testdir = ./test
 
 parse_transform_modules = $(foreach erl,$(wildcard $(srcdir)/*erl), $(shell grep -h "compile.*parse_transform" $(erl) | sed -e 's@-compile({parse_transform,\(.*\)}).@\1@' | sort -u | while read mod; do test -f $(srcdir)/$${mod}.erl && echo $${mod}; done))
 
@@ -33,10 +24,10 @@ app_src_files = $(notdir $(basename $(wildcard $(srcdir)/*app.src)))
 app_out_files = $(addprefix $(ebindir)/,$(app_src_files))
 
 PATHA ?= $(addprefix -pa ,$(wildcard $(libdir)/*/ebin))
-ERLCFLAGS = -I. -I.. -I../../deps -Iinclude $(PATHA) -I$(outdir) -I$(outdir)/include
+ERLCFLAGS = -I. -I.. -I../../deps -Iinclude $(extra_erlcflags)
 
 $(ebindir)/%.beam: $(srcdir)/%.erl
-	$(VERBOSE)echo "[beam]" $(subdir)/$@
+	$(VERBOSE)echo "[beam]" $(subdir)/$@ $(extra_erlcflags)
 	$(VERBOSE)$(ERLC) $(ERLCFLAGS) -o $(ebindir) $^
 
 $(ebindir)/%.beam: $(testdir)/%.erl
@@ -51,7 +42,7 @@ $(ebindir)/%.app: $(srcdir)/%.app.src
 		-s init stop
 	$(VERBOSE)cp $< $@
 
-mkdir = $(outdir) $(ebindir) $(outdir)/include $(outdir)/src $(etcdir)
+mkdir = $(ebindir)
 
 prepare: $(mkdir)
 
