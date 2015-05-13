@@ -1,6 +1,6 @@
 ERLC ?= erlc
 ERL ?= erl
-INSTALL ?= install 
+INSTALL ?= install
 INSTALL_FLAGS ?= -D -m 0644
 
 extra_erlcflags = $($(appname)_ERLCFLAGS)
@@ -27,15 +27,15 @@ PATHA ?= $(addprefix -pa ,$(wildcard $(libdir)/*/ebin))
 ERLCFLAGS = -I. -I.. -I../../deps -Iinclude $(extra_erlcflags)
 
 $(ebindir)/%.beam: $(srcdir)/%.erl
-	$(VERBOSE)echo "[beam]" $(subdir)/$@ $(extra_erlcflags)
+	$(VERBOSE)echo "{$(appname)}[beam]" $(subdir)/$@ $(extra_erlcflags)
 	$(VERBOSE)$(ERLC) $(ERLCFLAGS) -o $(ebindir) $^
 
 $(ebindir)/%.beam: $(testdir)/%.erl
-	$(VERBOSE)echo "[test_suit]" $(subdir)/$@
+	$(VERBOSE)echo "{$(appname)}[test_suit]" $(subdir)/$@ $(extra_erlcflags)
 	$(VERBOSE)$(ERLC) $(ERLCFLAGS) -o $(ebindir) $^
 
 $(ebindir)/%.app: $(srcdir)/%.app.src
-	$(VERBOSE)echo "[app]" $(subdir)/$@
+	$(VERBOSE)echo "{$(appname)}[app]" $(subdir)/$@
 	$(VERBOSE)erl -noshell \
 		-eval 'case file:consult("$<") of {ok,_} -> ok ; \
 		{error,{L,M,T}} -> io:format("$<: ~s ~s ~s ~n", [L,M,T]), halt(1) end.' \
