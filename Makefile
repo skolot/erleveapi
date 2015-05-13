@@ -12,7 +12,7 @@ SILENT = -s
 ifeq "$(V)" "1"
 VERBOSE =
 DEVNULL =
-SILENT = 
+SILENT =
 GITSUPPRES =
 endif
 
@@ -20,6 +20,8 @@ DEPSDST ?= deps
 
 ifneq "$(realpath config.mk)" ""
 include config.mk
+else
+$(error "config.mk doesn't exist!")
 endif
 
 APPS = $(DEPS) $(APP)
@@ -60,16 +62,15 @@ update-deps: $(UPDATE_DEPS)
 compile: $(COMPILE_APPS)
 
 $(COMPILE_APPS):
-	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst compile-,,$(@))_DIR) -f $(MKINCDIR)/erlang.mk appname=$(subst compile-,,$(@)) compile
+	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst compile-,,$(@))_DIR) -f $(MKINCDIR)/build.mk appname=$(subst compile-,,$(@)) compile
 
 clean: $(CLEAN_APPS)
 
 $(CLEAN_APPS):
-	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst clean-,,$(@))_DIR) -f $(MKINCDIR)/erlang.mk appname=$(subst clean-,,$(@)) clean
+	$(VERBOSE)$(MAKE) $(SILENT) -C $($(subst clean-,,$(@))_DIR) -f $(MKINCDIR)/build.mk appname=$(subst clean-,,$(@)) clean
 
 
 test: compile
 	$(VERBOSE)erl -noshell -pa ebin -eval 'eunit:test(eveapi_parser_SUITE)' -s init stop
 
 .PHONY: get-deps update-deps prepare mkdir clean compile test $(GET_DEPS) $(UPDATE_DEPS) $(COMPILE_APPS) $(CLEAN_APPS)
-
