@@ -55,7 +55,7 @@ $(UPDATE_DEPS):
 	$(VERBOSE)$(ECHO) "[update dep] $(subst update-deps-,,$@)"
 	$(VERBOSE)[ -r $($(subst update-deps-,,$@)_DIR)/.git ] && \
 		cd $($(subst update-deps-,,$@)_DIR) && $(GIT) pull $(GITSUPPRES) || \
-		$(ECHO) "$(subst update-deps-,,$@) doesn't exist, please run \`make get-deps\'"
+		$(ECHO) "$(subst update-deps-,,$@) doesn't exist, please run \`make get-deps'"
 
 update-deps: $(UPDATE_DEPS)
 
