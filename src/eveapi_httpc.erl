@@ -23,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, 
+-record(state,
         {
           requests_rate,
           requests_left,
@@ -73,7 +73,7 @@ init([]) ->
 
     {MaxRequests, RequestsInterval} = helper:get_env(erleveapi, requests_rate, {30, 1}),
     {MaxFailedRequests, FailedRequestsInterval} = helper:get_env(erleveapi, failed_request_rate, {300, 3 * 60}),
-    
+
     {ok, RequestsResetTimer} = timer:apply_interval(1000 * RequestsInterval, gen_server, cast, [?SERVER, reset_requests_counter]),
     {ok, FailedRequestsResetTimer} = timer:apply_interval(1000 * FailedRequestsInterval, gen_server, cast, [?SERVER, reset_failed_requests_counter]),
 
@@ -107,13 +107,16 @@ handle_call({get, _URL}, _From, #state{failed_requests_left = 0} = State) ->
     {reply, {error, limit_rate_exceed}, State};
 handle_call({get, URL}, _From, #state{requests_left = RequestsLeft, failed_requests_left = FailedRequestLeft} = State) ->
     ?DBG("get URL ~p", [URL]),
-    case httpc:request(get, {URL, []}, [], [{body_format, string}]) of 
+    case httpc:request(get, {URL, []}, [], [{body_format, string}]) of
         {ok, {_, _, Body}} ->
-            case eveapi_parser:xml_to_plist(Body) of 
-                [{error, Reason}] ->
-                    {reply, {error, Reason}, State#state{requests_left = RequestsLeft - 1, failed_requests_left = FailedRequestLeft - 1}};
-                Data ->
-                    {reply, {ok, Data}, State#state{requests_left = RequestsLeft - 1}}
+            case eveapi_parser:encode(Body) of
+                {ok, #{eveapi := #{error := _} = Error}}->
+                    {reply, Error, State#state{requests_left = RequestsLeft - 1, failed_requests_left = FailedRequestLeft - 1}};
+                {ok, #{eveapi := #{result := Data}}} ->
+                    {reply, {ok, Data}, State#state{requests_left = RequestsLeft - 1}};
+                _ ->
+                    {reply, {ok, #{error => #{code => unknow, text => "unknow"}}},
+                     State#state{requests_left = RequestsLeft - 1, failed_requests_left = FailedRequestLeft - 1}}
             end;
         {error, Reason} ->
             {reply, {error, Reason}, State#state{requests_left = RequestsLeft - 1, failed_requests_left = FailedRequestLeft - 1}}
