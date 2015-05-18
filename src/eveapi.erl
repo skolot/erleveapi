@@ -16,8 +16,10 @@
 -export(
    [
     start_proxy/2,
+    r/2,
     r/3,
-    set_active_char/2
+    set_active_char/2,
+    test/0
    ]
   ).
 
@@ -43,7 +45,7 @@
 %%--------------------------------------------------------------------
 start() ->
     start([], []).
-    
+
 start(_StartType, _StartArgs) ->
     case eveapi_sup:start_link() of
         {ok, Pid} ->
@@ -80,6 +82,9 @@ start_proxy(KeyId, VCode) ->
 
 set_active_char(SName, CharId) ->
     eveapiproxy:set_active_char(SName, CharId).
+
+r(SName, Request) ->
+    r(SName, Request, []).
 
 r(SName, Request, Args) ->
     eveapiproxy:r(SName, Request, Args).
