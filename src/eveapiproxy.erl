@@ -40,7 +40,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, 
+-record(state,
         {
           baseurl,
           charid,
@@ -51,13 +51,13 @@
         }
        ).
 
--define(URLKEYMAP, 
-        [
-         {keyid, "keyID"},
-         {vcode, "vCode"},
-         {charid, "characterID"},
-         {ids, "Ids"}
-        ]
+-define(URLKEYMAP,
+        #{
+          keyid => "keyID",
+          vcode => "vCode",
+          charid => "characterID",
+          ids => "Ids"
+         }
        ).
 
 %%%===================================================================
@@ -72,7 +72,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start(KeyId, VCode) ->
-    SName = erlang:binary_to_atom(KeyId, utf8),
+    SName = erlang:list_to_atom(erlang:integer_to_list(KeyId)),
     Spec = {SName, {eveapiproxy, start_link, [SName, KeyId, VCode]}, permanent, 5000, worker, []},
     case supervisor:start_child(eveapi_sup, Spec) of
         {error, _} = Error ->
@@ -194,11 +194,11 @@ construct_url(Request, Args, #state{baseurl = BaseUrl} = State) ->
 
     ?DBG("Args0 ~p Args1 ~p", [Args0, Args1]),
 
-    ArgsStr = 
+    ArgsStr =
         string:join(
           lists:map(
             fun({Key, Val}) ->
-                    helper:plist_getval(Key, ?URLKEYMAP, "none") ++ "=" ++ Val
+                    maps:get(Key, ?URLKEYMAP, "none") ++ "=" ++ helper:to_list(Val)
             end,
             Args0 ++ Args1
            ),
@@ -206,7 +206,7 @@ construct_url(Request, Args, #state{baseurl = BaseUrl} = State) ->
          ),
 
     ?DBG("ArgsStr ~p", [ArgsStr]),
-    
+
     RequestURL = helper:plist_getval(Request, ?REQUESTS, "none"),
     BaseUrl ++ RequestURL ++ "?" ++ ArgsStr.
 
@@ -218,8 +218,8 @@ prepare_args(_Request, Args) ->
     Args.
 
 requests_specific_vars({RType, _}, #state{keyid = KeyId, charid = CharId, vcode = VCode}) when RType == 'Char' orelse RType == 'Corp' ->
-    [{keyid, erlang:binary_to_list(KeyId)}, {charid, erlang:binary_to_list(CharId)}, {vcode, erlang:binary_to_list(VCode)}];
+    [{keyid, erlang:integer_to_list(KeyId)}, {charid, erlang:integer_to_list(CharId)}, {vcode, erlang:binary_to_list(VCode)}];
 requests_specific_vars({'Account', _}, #state{keyid = KeyId, vcode = VCode}) ->
-    [{keyid, erlang:binary_to_list(KeyId)}, {vcode, erlang:binary_to_list(VCode)}];
+    [{keyid, erlang:integer_to_list(KeyId)}, {vcode, erlang:binary_to_list(VCode)}];
 requests_specific_vars(_, #state{}) ->
     [].
