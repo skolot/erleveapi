@@ -27,15 +27,15 @@ PATHA ?= $(addprefix -pa ,$(wildcard $(libdir)/*/ebin))
 ERLCFLAGS = -I. -I.. -I../../deps -Iinclude $(extra_erlcflags)
 
 $(ebindir)/%.beam: $(srcdir)/%.erl
-	$(VERBOSE)echo "{$(appname)}[beam]" $(subdir)/$@ $(extra_erlcflags)
+	$(VERBOSE)echo "{$(appname)}[beam]" $@ $(extra_erlcflags)
 	$(VERBOSE)$(ERLC) $(ERLCFLAGS) -o $(ebindir) $^
 
 $(ebindir)/%.beam: $(testdir)/%.erl
-	$(VERBOSE)echo "{$(appname)}[test_suit]" $(subdir)/$@ $(extra_erlcflags)
+	$(VERBOSE)echo "{$(appname)}[test_suit]" $@ $(extra_erlcflags)
 	$(VERBOSE)$(ERLC) $(ERLCFLAGS) -o $(ebindir) $^
 
 $(ebindir)/%.app: $(srcdir)/%.app.src
-	$(VERBOSE)echo "{$(appname)}[app]" $(subdir)/$@
+	$(VERBOSE)echo "{$(appname)}[app]" $@
 	$(VERBOSE)erl -noshell \
 		-eval 'case file:consult("$<") of {ok,_} -> ok ; \
 		{error,{L,M,T}} -> io:format("$<: ~s ~s ~s ~n", [L,M,T]), halt(1) end.' \
