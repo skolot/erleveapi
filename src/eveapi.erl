@@ -16,10 +16,8 @@
 -export(
    [
     start_proxy/2,
-    r/2,
-    r/3,
-    set_active_char/2,
-    test/0
+    r/2, r/3,
+    set_active_char/2
    ]
   ).
 
