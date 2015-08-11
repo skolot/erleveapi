@@ -36,7 +36,7 @@ CLEAN_APPS =$(addprefix clean-, $(APPS))
 
 all: prepare get-deps update-deps compile
 
-prepare: mkdir
+prepare:
 
 mkdir: $(DEPSDST)
 
@@ -47,7 +47,9 @@ $(DEPSDST):
 $(GET_DEPS):
 	$(VERBOSE)$(ECHO) "[get dep] $(subst get-deps-,,$@)"; \
 		[ ! -r $($(subst get-deps-,,$@)_DIR)/.git ] && \
-		$(GIT) clone $(GITSUPPRES) $($(subst get-deps-,,$@)_SOURCE) $($(subst get-deps-,,$@)_DIR); exit 0
+		$(GIT) clone -n $(GITSUPPRES) $($(subst get-deps-,,$@)_SOURCE) \
+			$($(subst get-deps-,,$@)_GIT_CLONE_OPT) $($(subst get-deps-,,$@)_DIR) && \
+			cd $($(subst get-deps-,,$@)_DIR) && $(GIT) checkout HEAD; exit 0
 
 get-deps: $(GET_DEPS)
 
