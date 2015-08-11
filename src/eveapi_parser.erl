@@ -50,7 +50,9 @@
                freeSkillPoints,
                homeStationID,
                published,
-               rawQuantity
+               rawQuantity,
+               ancestryID,
+               bloodLineID
               ],
           convert_fun => fun
                              (E) when is_list(E) ->
@@ -150,23 +152,15 @@ encode(map, L) when is_list(L) ->
 element_hook(#xmlElement{name = error, attributes = [#xmlAttribute{name = code, value = Code}], content = [Text]}, GlobalState) ->
     {{error, [{code, convert_value({code, Code})}, {text, convert_value({text, Text})}]}, GlobalState};
 element_hook(#xmlElement{name = eveapi, content = Content, attributes = Attributes}, GlobalState) ->
-    ApiVersion =
-        case lists:keyfind(version, #xmlAttribute.name, Attributes) of
-            false ->
-                unknown;
-            #xmlAttribute{value = V} ->
-                erlang:list_to_integer(V)
-        end,
+    ApiVersion = erlang:list_to_integer(helper:get_value_from_record_list(version, #xmlAttribute.name, #xmlAttribute.value, Attributes, "0")),
     {{eveapi, [{version, ApiVersion} | Content]}, GlobalState};
+element_hook(#xmlElement{name = key, content = Content, attributes = Attributes}, GlobalState) ->
+    APIKeyType = helper:to_binary(helper:get_value_from_record_list(type, #xmlAttribute.name, #xmlAttribute.value, Attributes)),
+    APIKeyExpirationDate = helper:to_binary(helper:get_value_from_record_list(expires, #xmlAttribute.name, #xmlAttribute.value, Attributes)),
+    {{apikey, [{type, APIKeyType}, {expires, APIKeyExpirationDate} | Content]}, GlobalState};
 element_hook(#xmlElement{name = rowset, content = Content, attributes = Attributes}, GlobalState) ->
-    RowsetName =
-        case lists:keyfind(name, #xmlAttribute.name, Attributes) of
-            false ->
-                unknown;
-            #xmlAttribute{value = V} ->
-                erlang:list_to_atom(V)
-        end,
-    {{RowsetName, Content}, GlobalState};
+    RowsetName = erlang:list_to_atom(helper:get_value_from_record_list(name, #xmlAttribute.name, #xmlAttribute.value, Attributes, "unknown")),
+    {{RowsetName, [Content]}, GlobalState};
 element_hook(#xmlElement{name = row, content = Content, attributes = Attributes}, GlobalState) ->
     AttributesPList = [{Name, convert_value({Name, Value})} || #xmlAttribute{name = Name, value = Value} <- Attributes],
     Result =

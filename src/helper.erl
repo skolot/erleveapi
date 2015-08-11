@@ -16,7 +16,10 @@
     plist_getval/2,
     plist_getval/3,
     plist_replace/3,
-    to_list/1
+    to_list/1,
+    to_binary/1,
+    get_value_from_record_list/4,
+    get_value_from_record_list/5
    ]
   ).
 
@@ -43,7 +46,7 @@ plist_getval(Key, PList) ->
     plist_getval(Key, PList, undefined).
 
 plist_getval(Key, PList, Default) ->
-    case lists:keyfind(Key, 1, PList) of 
+    case lists:keyfind(Key, 1, PList) of
         false ->
             Default;
         {Key, Value} ->
@@ -54,12 +57,36 @@ plist_replace(Key, Val, PList) ->
     lists:keydelete(Key, 1, PList) ++ [{Key, Val}].
 
 
-to_list(I) when is_integer(I) ->
-    erlang:integer_to_list(I);
-to_list(I) when is_binary(I) ->
-    erlang:binary_to_list(I);
-to_list(I) ->
-    I.
+to_list(E) when is_integer(E) ->
+    erlang:integer_to_list(E);
+to_list(E) when is_float(E) ->
+    erlang:float_to_list(E);
+to_list(E) when is_binary(E) ->
+    erlang:binary_to_list(E);
+to_list(E) ->
+    E.
+
+to_binary(E) when is_binary(E) ->
+    E;
+to_binary(E) when is_list(E) ->
+    erlang:list_to_binary(E);
+to_binary(E) when is_integer(E) orelse is_float(E) ->
+    erlang:list_to_binary(to_list(E));
+to_binary(E) ->
+    E.
+
+get_value_from_record_list(Key, KeyPos, ValPos, List) ->
+    get_value_from_record_list(Key, KeyPos, ValPos, List, unknown).
+
+get_value_from_record_list(Key, KeyPos, ValPos, [H | _Tail] = List, Default) when is_tuple(H) ->
+    case lists:keyfind(Key, KeyPos, List) of
+        false ->
+            Default;
+        Record ->
+            erlang:element(ValPos, Record)
+    end;
+get_value_from_record_list(_Key, _KeyPos, _ValPos, _List, _Default) ->
+    {error, badarg}.
 
 
 %%%===================================================================
