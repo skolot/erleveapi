@@ -37,8 +37,7 @@ $(ebindir)/%.beam: $(testdir)/%.erl
 $(ebindir)/%.app: $(srcdir)/%.app.src
 	$(VERBOSE)echo "{$(appname)}[app]" $@
 	$(VERBOSE)erl -noshell \
-		-eval 'case file:consult("$<") of {ok,_} -> ok ; \
-		{error,{L,M,T}} -> io:format("$<: ~s ~s ~s ~n", [L,M,T]), halt(1) end.' \
+		-eval 'case file:consult("$<") of {ok,_} -> ok ; {error,{L,M,T}} -> io:format("$<: ~s ~s ~s ~n", [L,M,T]), halt(1) end.' \
 		-s init stop
 	$(VERBOSE)cp $< $@
 
@@ -47,7 +46,6 @@ mkdir = $(ebindir)
 prepare: $(mkdir)
 
 $(mkdir):
-	$(VERBOSE)echo "[mkdir]" $@
 	$(VERBOSE)mkdir -p $@
 
 compile: prepare $(beam_out_files) $(app_out_files) $(etc_out_files) $(priv_out_files) $(beam_test_out_files)
